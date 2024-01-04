@@ -1,5 +1,7 @@
 import logging, os, httpx, json
-
+import difflib
+import glob
+from os.path import dirname, basename, isfile, join
 from dotenv import load_dotenv
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -19,6 +21,9 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+modules = glob.glob(join(dirname(__file__), "handlers", "*.py"))
+a = [basename(f)[:-3] for f in modules if isfile(f)
+    and not f.endswith('__init__.py')]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -30,6 +35,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Help!")
+
+async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        command = update.message.text.strip()
+        similar_commands = difflib.get_close_matches(command, a)
+        if similar_commands:
+            most_similar_command = similar_commands[0]
+            await update.message.reply_text(f"Command not found! Did you mean /{most_similar_command}?")
+        else:
+            await update.message.reply_text("Command not found!")
+
 
 def main() -> None:
     application = Application.builder().token(bot_token).build()
@@ -47,6 +62,8 @@ def main() -> None:
             application.add_handler(
                 handler[0]
             )
+    
+    application.add_handler(MessageHandler(filters.ChatType.PRIVATE, unknown))
     
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
