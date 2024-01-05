@@ -11,6 +11,8 @@ from handlers import all_handlers
 # Load environment variables
 load_dotenv()
 bot_token = os.getenv("BOT_TOKEN")
+sudo_users = os.getenv("SUDO_USERS")
+admin_group_id = os.getenv("ADMIN_GROUP_ID")
 
 # Set up logging
 logging.basicConfig(
@@ -44,6 +46,20 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.message.reply_text(f"Command not found! Did you mean /{most_similar_command}?")
         else:
             await update.message.reply_text("Command not found!")
+
+async def shutdown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    args = context.args
+    if update.effective_user.id not in sudo_users:
+        await update.message.reply_text("You are not authorized to shut down the bot.")
+        return
+    elif update.effective_user.id in sudo_users and len(args) == 0:
+        await update.message.reply_text("Please provide a reason for shutting down the bot.")
+        return
+    else:
+        reason = " ".join(args)
+        await update.message.reply_text(f"Shutting down the bot due to {reason}.")
+        await context.bot.send_message(chat_id=admin_group_id, text=f"Shutting down the bot due to {reason}.")
+        await context.bot.stop()
 
 
 def main() -> None:
