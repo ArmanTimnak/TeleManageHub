@@ -1,7 +1,7 @@
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
-async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def profileCommand(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user.is_premium:
         premium = "Yes"
     else:
@@ -22,7 +22,7 @@ __handlers__ = [
     [
         CommandHandler(
             "profile",
-            profile
+            profileCommand
         )
     ]
 ]
