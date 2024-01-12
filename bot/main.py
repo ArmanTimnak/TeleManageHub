@@ -10,9 +10,13 @@ from handlers import all_handlers
 
 # Load environment variables
 load_dotenv()
+
 bot_token = os.getenv("BOT_TOKEN")
 sudo_users = os.getenv("SUDO_USERS")
-admin_group_id = os.getenv("ADMIN_GROUP_ID")
+admin_group = os.getenv("ADMIN_GROUP")
+bot_username = os.getenv("BOT_USERNAME")
+bot_name = os.getenv("BOT_NAME")
+bot_language = os.getenv("BOT_LANGUAGE")
 
 # Set up logging
 logging.basicConfig(
@@ -28,12 +32,32 @@ a = [basename(f)[:-3] for f in modules if isfile(f)
     and not f.endswith('__init__.py')]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    data = {
+        'id': update.effective_user.id,
+        'NAME': f'{update.effective_user.first_name} {update.effective_user.last_name}',
+        'USERNAME': f'{update.effective_user.username}',
+        'USER_ID': f'{update.effective_user.id}',
+        'LANGUAGE_CODE': f'{update.effective_user.language_code}',
+        'IS_GROUP_ADMIN': None
+    }
+
+    if not os.path.isfile('data.json'):
+        with open('data.json', 'w') as f:
+            json.dump({'users': [data]}, f)
+    else:
+        with open('data.json', 'r+') as f:
+            file_data = json.load(f)
+            if any(user['id'] == data['id'] for user in file_data['users']) == False:
+                file_data['users'].append(data)
+                f.seek(0)
+                json.dump(file_data, f)
+
     user = update.effective_user
     await update.message.reply_html(
         f"Welcome to TeleManageHub! 🤖 \n\nYour ultimate Telegram companion for effortless group and channel management. Type /help to dive into a world of features.\n\nLet's enhance your Telegram experience! 🚀",
-        reply_markup=ForceReply(selective=True),
+        reply_markup=ForceReply(selective=True),   
     )
-
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Help!")
